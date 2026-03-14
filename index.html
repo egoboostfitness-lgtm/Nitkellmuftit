@@ -3,210 +3,348 @@
 <head>
 <title>Nitkelmu Ftit Chat</title>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
 <style>
-body{font-family:Arial;margin:0;background:#faffff}
-header{background:#8888f8;color:white;padding:10px;text-align:center;}
-#container{display:flex;height:90vh;}
-#rooms{width:200px;background:#ddd;padding:10px;}
-.room{cursor:pointer;padding:5px;}
-#chatArea{flex:1;display:flex;flex-direction:column;}
-#chat{flex:1;overflow:auto;background:white;padding:10px;}
-.msg{border-bottom:1px solid #eee;padding:6px;}
-.controls{padding:10px;background:#fafafa;}
-input{padding:8px;margin:4px;}
-button{padding:8px;margin:2px;}
-img{max-width:150px;display:block;margin-top:5px;}
-video{width:200px;}
-#typing{font-size:12px;opacity:0.7;}
-#online{font-size:12px;opacity:0.8;margin-bottom:5px;}
+
+body{
+font-family:Arial;
+margin:0;
+background:#8882f2;
+}
+
+header{
+background:#88888f;
+color:white;
+padding:10px;
+text-align:center;
+}
+
+#container{
+display:flex;
+height:90vh;
+}
+
+#rooms{
+width:200px;
+background:#ddd;
+padding:10px;
+}
+
+.room{
+cursor:pointer;
+padding:5px;
+}
+
+#chatArea{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+#chat{
+flex:1;
+overflow:auto;
+background:white;
+padding:10px;
+}
+
+.msg{
+border-bottom:1px solid #eee;
+padding:6px;
+}
+
+.controls{
+padding:10px;
+background:#fafafa;
+}
+
+input{
+padding:8px;
+margin:4px;
+}
+
+button{
+padding:8px;
+margin:2px;
+}
+
+img{
+max-width:150px;
+display:block;
+margin-top:5px;
+}
+
+video{
+width:200px;
+}
+
+#loginBox{
+padding:20px;
+text-align:center;
+}
+
 </style>
+
 </head>
 
 <body>
 
-<header>Nitkelmu Ftit chat</header>
+<header><b>Nitkelmu Ftit</b></header>
 
-<div id="container">
+<div id="loginBox">
+
+<input id="email" placeholder="Email">
+<input id="password" type="password" placeholder="Password">
+
+<button onclick="signUp()">Sign Up</button>
+<button onclick="signIn()">Login</button>
+
+<br><br>
+
+<button onclick="facebookLogin()">Login with Facebook</button>
+
+</div>
+
+<div id="container" style="display:none">
 
 <div id="rooms">
+
 <b>Rooms</b>
+
 <div class="room" onclick="switchRoom('general')">General</div>
-<div class="room" onclick="switchRoom('Friends')">Friends</div>
+<div class="room" onclick="switchRoom('gaming')">Gaming</div>
 <div class="room" onclick="switchRoom('music')">Music</div>
+
 </div>
 
 <div id="chatArea">
-<div id="online"></div>
+
 <div id="chat"></div>
-<div id="typing"></div>
 
 <div class="controls">
-<button onclick="signIn()">Login with Google</button>
-<input id="message" placeholder="Message" disabled>
-<input id="privateUser" placeholder="Private to (optional)" disabled>
-<button onclick="send()" disabled>Send</button>
-<button onclick="emoji('😀')" disabled>😀</button>
-<button onclick="emoji('🔥')" disabled>🔥</button>
-<button onclick="emoji('😂')" disabled>😂</button>
-<button onclick="startCamera()" disabled>📷 Camera</button>
+
+<input id="message" placeholder="Message">
+<input id="privateUser" placeholder="Private to (optional)">
+
+<button onclick="send()">Send</button>
+
+<button onclick="emoji('😀')">😀</button>
+<button onclick="emoji('🔥')">🔥</button>
+<button onclick="emoji('😂')">😂</button>
+
+<button onclick="startCamera()">📷 Camera</button>
+
 </div>
 
 <video id="camera" autoplay></video>
-<button onclick="capture()" disabled>Capture</button>
+
+<button onclick="capture()">Capture</button>
 
 </div>
+
 </div>
 
 <script>
+
 const SUPABASE_URL="https://ajcxjjbwoyugiwsslknw.supabase.co";
-const SUPABASE_KEY="sb_publishable_nQNkzu7hFbQGEjRMJ5x1nw_Aes68OwI";
+const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqY3hqamJ3b3l1Z2l3c3Nsa253Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0Mjc4NTYsImV4cCI6MjA4OTAwMzg1Nn0.jHYCwncqJf941ae-MNi1fEPgMcUiPW9iUPXRcdLsXU8";
 
 const client=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 
-// encryption key
-const ENC_KEY="my-secret-key";
-
-let username=null;
+let user=null;
 let room="general";
 let capturedImage=null;
+let lastMessageTime=0;
 
 const chat=document.getElementById("chat");
-const typing=document.getElementById("typing");
-const onlineList=document.getElementById("online");
 
-function emoji(e){document.getElementById("message").value+=e;}
-function switchRoom(r){room=r;load();}
-async function checkBan(){
-if(!username) return;
-const {data}=await client.from("banned_users").select("*").eq("username",username);
-if(data.length>0){alert("You are banned."); throw new Error("banned");}
+function showChat(){
+
+document.getElementById("loginBox").style.display="none";
+document.getElementById("container").style.display="flex";
+
+loadMessages();
+
 }
 
-// Google login
+async function signUp(){
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+const {data,error}=await client.auth.signUp({
+email:email,
+password:password
+});
+
+if(error){alert(error.message);return;}
+
+alert("Account created. Check email verification.");
+
+}
+
 async function signIn(){
-const { data, error } = await client.auth.signInWithOAuth({ provider: 'google' });
-if(error){alert("Login failed"); return;}
-const { data:user } = await client.auth.getUser();
-username=user.user_metadata.full_name || user.email;
-document.querySelectorAll('input, button').forEach(e=>e.disabled=false);
-updatePresence();
-load();
+
+const email=document.getElementById("email").value;
+const password=document.getElementById("password").value;
+
+const {data,error}=await client.auth.signInWithPassword({
+email:email,
+password:password
+});
+
+if(error){alert(error.message);return;}
+
+user=data.user;
+
+showChat();
+
 }
 
-// Online presence
-async function updatePresence(){
-if(!username) return;
-await client.from("online_users").upsert({username,last_seen:new Date()});
-}
-setInterval(updatePresence,10000);
-async function showOnline(){
-const {data}=await client.from("online_users").select("*");
-let onlineUsers=data.filter(u=>new Date()-new Date(u.last_seen)<30000).map(u=>u.username);
-onlineList.innerText="Online: "+onlineUsers.join(", ");
-}
-setInterval(showOnline,5000);
+async function facebookLogin(){
 
-// Load messages
-async function load(){
-const {data}=await client.from("messages").select("*").order("created_at",{ascending:true});
+await client.auth.signInWithOAuth({
+provider:'facebook'
+});
+
+}
+
+function emoji(e){
+
+document.getElementById("message").value+=e;
+
+}
+
+function switchRoom(r){
+
+room=r;
+
 chat.innerHTML="";
-data.forEach(m=>{
-if(m.room!==room) return;
-if(m.private_to && m.private_to!==username && m.username!==username) return;
 
-let text="";
-if(m.message) text=CryptoJS.AES.decrypt(m.message,ENC_KEY).toString(CryptoJS.enc.Utf8);
+loadMessages();
+
+}
+
+function addMessage(m){
+
+if(m.room!==room) return;
 
 let div=document.createElement("div");
+
 div.className="msg";
-div.innerHTML="<b>"+m.username+"</b>: "+text;
+
+div.innerHTML="<b>"+m.username+"</b>: "+(m.message||"");
 
 if(m.image){
+
 let img=document.createElement("img");
 img.src=m.image;
 div.appendChild(img);
-}
 
-// admin controls
-if(username==="admin"){
-let ban=document.createElement("button");
-ban.innerText="ban";
-ban.onclick=()=>banUser(m.username);
-div.appendChild(ban);
 }
 
 chat.appendChild(div);
-});
+
 chat.scrollTop=chat.scrollHeight;
+
 }
 
-// Send message
-async function send(){
-const text=document.getElementById("message").value;
-const privateTo=document.getElementById("privateUser").value;
-if(!text && !capturedImage) return;
+async function loadMessages(){
 
-const encrypted=CryptoJS.AES.encrypt(text,ENC_KEY).toString();
+const {data}=await client
+.from("messages")
+.select("*")
+.eq("room",room)
+.order("created_at",{ascending:false})
+.limit(50);
+
+chat.innerHTML="";
+
+data.reverse().forEach(addMessage);
+
+}
+
+async function send(){
+
+const text=document.getElementById("message").value;
+
+const privateTo=document.getElementById("privateUser").value;
+
+const now=Date.now();
+
+if(now-lastMessageTime<2000){
+alert("Slow down!");
+return;
+}
+
+lastMessageTime=now;
+
+if(text.length>200){
+alert("Message too long");
+return;
+}
 
 await client.from("messages").insert([{
-username,
-message:encrypted,
-room,
+
+username:user.email,
+message:text,
+room:room,
 image:capturedImage,
 private_to:privateTo||null
+
 }]);
 
 capturedImage=null;
+
 document.getElementById("message").value="";
-document.getElementById("privateUser").value="";
 
-if("Notification" in window && Notification.permission==="granted"){
-new Notification("Message sent!");
-}else if("Notification" in window && Notification.permission!=="denied"){
-Notification.requestPermission();
-}
 }
 
-// Admin ban
-async function banUser(user){
-await client.from("banned_users").insert([{username:user}]);
-alert(user+" banned");
-}
-
-// Live subscription
-client.channel("chat")
-.on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>load())
+client
+.channel("chat")
+.on(
+"postgres_changes",
+{event:"INSERT",schema:"public",table:"messages"},
+payload=>addMessage(payload.new)
+)
 .subscribe();
 
-// Typing indicator
-document.getElementById("message").addEventListener("input",()=>{
-typing.innerText=username+" is typing...";
-setTimeout(()=>typing.innerText="",1500);
-});
-
-load();
-
-// Camera capture
 async function startCamera(){
+
 const stream=await navigator.mediaDevices.getUserMedia({video:true});
+
 document.getElementById("camera").srcObject=stream;
-document.querySelector("button[onclick='capture()']").disabled=false;
+
 }
+
 function capture(){
+
 const video=document.getElementById("camera");
+
 const canvas=document.createElement("canvas");
-canvas.width=200; canvas.height=150;
+
+canvas.width=200;
+canvas.height=150;
+
 const ctx=canvas.getContext("2d");
+
 ctx.drawImage(video,0,0,200,150);
+
 let data=canvas.toDataURL("image/jpeg",0.5);
-if(data.length>100000){alert("Image too large (max 100kb)"); return;}
+
+if(data.length>100000){
+alert("Image too large (max 100kb)");
+return;
+}
+
 capturedImage=data;
+
 alert("Image captured");
+
 }
 
 </script>
+
 </body>
 </html>
