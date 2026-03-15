@@ -368,19 +368,17 @@ alert("User banned")
 }
 
 
-async function loadMessages(){
+async function loadMessages() {
+  const { data } = await client.from("messages")
+    .select("*")
+    .eq("room", room)
+    .order("created_at", { ascending: true })
+    .limit(50);
 
-const {data}=await client.from("messages")
-.select("*")
-.eq("room",room)
-.order("created_at",{ascending:true})
-.limit(50)
-
-chat.innerHTML=""
-data.forEach(renderMessage)
-
+  chat.innerHTML = "";
+  data.forEach(renderMessage);
 }
-
+  
 // ----------------- Online Users (FIXED) -----------------
 async function updateOnline() {
     if (!username) return; // Only track logged-in users
@@ -446,13 +444,16 @@ return
 capturedImage=data
 
 }
-
-
 client.channel("messages")
-.on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},payload=>{
-renderMessage(payload.new)
-})
-.subscribe()
+  .on("postgres_changes", {
+    event: "INSERT",
+    schema: "public",
+    table: "messages"
+  }, payload => {
+    renderMessage(payload.new);  // Render new message immediately
+  })
+  .subscribe();
+
 
 </script>
 
