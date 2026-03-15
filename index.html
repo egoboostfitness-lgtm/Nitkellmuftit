@@ -146,14 +146,6 @@ color:#666
 <input id="privateUser" placeholder="Private to">
 
 <button onclick="sendMessage()">Send</button>
-<button onclick="startCamera()">📷</button>
-
-</div>
-
-<video id="camera" autoplay width="200"></video>
-<button onclick="capturePhoto()">Capture</button>
-
-</div>
 
 
 <div id="onlineSidebar">
@@ -339,7 +331,15 @@ capturedImage=null
 document.getElementById("message").value=""
 
 }
+// Send message when pressing Enter
+const messageInput = document.getElementById("message");
 
+messageInput.addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        event.preventDefault(); // Prevent default form submission / newline
+        sendMessage();          // Call your send function
+    }
+});
 
 async function deleteMsg(id){
 await client.from("messages").delete().eq("id",id)
