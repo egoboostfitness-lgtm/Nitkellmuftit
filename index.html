@@ -2,121 +2,125 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Chat App</title>
+<title>Purple Chat App</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
 body{
-margin:0;
-font-family:Arial;
-background:#ece5dd;
-height:100vh;
-display:flex;
-flex-direction:column;
+  margin:0;
+  font-family:Arial;
+  background:#f2f2f5;
+  height:100vh;
+  display:flex;
+  flex-direction:column;
 }
 
 /* HEADER */
 header{
-background:#075e54;
-color:white;
-padding:12px;
-font-size:18px;
+  background:#6a0dad;
+  color:white;
+  padding:12px;
+  font-size:18px;
 }
 
 /* MAIN LAYOUT */
 #container{
-flex:1;
-display:flex;
+  flex:1;
+  display:flex;
 }
 
 /* SIDEBAR */
 #onlineSidebar{
-width:220px;
-background:#fff;
-border-right:1px solid #ddd;
-overflow:auto;
+  width:220px;
+  background:#e0d9f2;
+  border-right:1px solid #ccc;
+  overflow:auto;
 }
 
 .user{
-padding:10px;
-border-bottom:1px solid #eee;
-cursor:pointer;
+  padding:10px;
+  border-bottom:1px solid #d5c9e5;
+  cursor:pointer;
 }
-.user:hover{background:#f5f5f5}
+.user:hover{background:#d5c9e5}
 
 /* CHAT AREA */
 #chatArea{
-flex:1;
-display:flex;
-flex-direction:column;
+  flex:1;
+  display:flex;
+  flex-direction:column;
 }
 
 #chat{
-flex:1;
-overflow:auto;
-padding:10px;
-display:flex;
-flex-direction:column;
+  flex:1;
+  overflow:auto;
+  padding:10px;
+  display:flex;
+  flex-direction:column;
 }
 
 /* MESSAGE BUBBLES */
 .msg{
-max-width:60%;
-padding:8px 10px;
-margin:5px;
-border-radius:10px;
-font-size:14px;
+  max-width:60%;
+  padding:8px 10px;
+  margin:5px;
+  border-radius:10px;
+  font-size:14px;
 }
 
 .me{
-background:#dcf8c6;
-align-self:flex-end;
+  background:#cbb3ff;
+  align-self:flex-end;
 }
 
 .other{
-background:#fff;
-align-self:flex-start;
+  background:#fff;
+  align-self:flex-start;
 }
 
 /* INPUT BAR */
 #controls{
-display:flex;
-padding:10px;
-background:#f0f0f0;
+  display:flex;
+  padding:10px;
+  background:#ddd;
 }
 
 #message{
-flex:1;
-padding:10px;
-border-radius:20px;
-border:1px solid #ccc;
-outline:none;
+  flex:1;
+  padding:10px;
+  border-radius:20px;
+  border:1px solid #aaa;
+  outline:none;
 }
 
 button{
-margin-left:5px;
-padding:8px 12px;
-border:none;
-background:#075e54;
-color:white;
-border-radius:6px;
-cursor:pointer;
+  margin-left:5px;
+  padding:8px 12px;
+  border:none;
+  background:#6a0dad;
+  color:white;
+  border-radius:6px;
+  cursor:pointer;
 }
 
 /* LOGIN */
 #loginBox{
-padding:30px;
-text-align:center;
+  padding:30px;
+  text-align:center;
 }
 
+.unread{
+  font-weight:bold;
+  color:#6a0dad;
+}
 </style>
 </head>
 
 <body>
 
-<header id="chatHeader">Secure Chat</header>
+<header id="chatHeader">Purple Chat</header>
 
 <div id="loginBox">
 
@@ -165,6 +169,9 @@ let username="";
 let room="general";
 let privateChatUser=null;
 let channel=null;
+
+// Track unread messages
+let unread={};
 
 const chat=document.getElementById("chat");
 const onlineList=document.getElementById("onlineList");
@@ -215,21 +222,20 @@ subscribeMessages();
 /* RENDER */
 function renderMessage(m){
 
-if(privateChatUser){
-if(!(
-(m.username===username && m.private_to===privateChatUser) ||
-(m.username===privateChatUser && m.private_to===username)
-)) return;
-}else{
-if(m.room!==room || m.private_to) return;
+// Check if private chat
+let target = m.private_to ? m.username : m.room;
+
+// If not current open chat/room, increment unread
+if((privateChatUser && m.username !== privateChatUser) || (!privateChatUser && m.room !== room)){
+    if(!unread[target]) unread[target]=0;
+    unread[target]++;
+    updateSidebar();
+    return;
 }
 
 const div=document.createElement("div");
-
 div.className="msg "+(m.username===username?"me":"other");
-
 div.innerHTML=decrypt(m.message);
-
 chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
 }
@@ -252,11 +258,15 @@ data.forEach(renderMessage);
 
 document.getElementById("chatHeader").innerText =
 privateChatUser ? privateChatUser : "# "+room;
+
+// Reset unread
+if(privateChatUser) unread[privateChatUser]=0;
+else unread[room]=0;
+updateSidebar();
 }
 
 /* SEND */
 async function sendMessage(){
-
 const text=message.value;
 if(!text) return;
 
@@ -303,9 +313,11 @@ const {data}=await client.from("online_users").select("*");
 
 const active=data.filter(u=>new Date()-new Date(u.last_seen)<30000);
 
-onlineList.innerHTML=active.map(u=>
-`<div class="user" onclick="startPrivate('${u.username}')">${u.username}</div>`
-).join("");
+onlineList.innerHTML=active.map(u=>{
+let name=u.username;
+let badge=unread[name]?` <span class="unread">(${unread[name]})</span>`:"";
+return `<div class="user" onclick="startPrivate('${name}')">${name}${badge}</div>`;
+}).join("");
 }
 
 setInterval(updateOnline,5000);
@@ -317,9 +329,11 @@ chat.innerHTML="";
 loadMessages();
 }
 
+/* SWITCH ROOM */
 function switchRoom(r){
 room=r;
 privateChatUser=null;
+chat.innerHTML="";
 loadMessages();
 }
 </script>
