@@ -1,462 +1,259 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-
 <meta charset="UTF-8">
-<title>Secure Pro Chat</title>
+<title>Pro Chat X</title>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
 
 <style>
+body{margin:0;font-family:Arial;background:#e5ddd5;height:100vh;display:flex;flex-direction:column}
+header{background:#075e54;color:white;padding:10px;text-align:center}
 
-body{
-font-family:Arial;
-margin:0;
-height:100vh;
-display:flex;
-flex-direction:column;
-background:#f3f3f3
-}
+#container{flex:1;display:flex}
 
-header{
-background:#4a6cff;
-color:white;
-padding:10px;
-text-align:center
-}
+#rooms{width:150px;background:#ccc;padding:10px}
+.room{cursor:pointer;margin:5px 0}
 
-#container{
-flex:1;
-display:flex
-}
+#chatArea{flex:1;display:flex;flex-direction:column}
 
-#rooms{
-width:160px;
-background:#ddd;
-padding:10px
-}
-
-.room{
-cursor:pointer;
-padding:6px
-}
-
-#chatArea{
-flex:1;
-display:flex;
-flex-direction:column
-}
-
-#chat{
-flex:1;
-overflow:auto;
-background:white;
-padding:10px
-}
+#chat{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column}
 
 .msg{
-border-bottom:1px solid #eee;
-padding:6px
+max-width:60%;
+padding:8px;
+margin:5px;
+border-radius:10px;
 }
 
-#controls{
-padding:10px;
-background:#fafafa
-}
+.me{background:#dcf8c6;align-self:flex-end}
+.other{background:white;align-self:flex-start}
 
-#loginBox{
-text-align:center;
-padding:30px
-}
+#controls{padding:10px;background:#f0f0f0}
+#onlineSidebar{width:180px;background:#eee;padding:10px}
 
-#onlineSidebar{
-width:180px;
-background:#eee;
-padding:10px
-}
+#typing{font-size:12px;color:#555}
 
-img{
-max-width:120px;
-margin-top:5px
-}
-
-button{
-margin:2px
-}
-
-#typing{
-font-size:12px;
-color:#666
-}
-
+.tick{font-size:10px;color:gray;margin-left:5px}
 </style>
-
 </head>
 
 <body>
 
-<header>Secure Pro Chat</header>
+<header>Pro Chat X</header>
 
 <div id="loginBox">
-
-<h3>Sign Up</h3>
-
 <input id="signupEmail" placeholder="Email"><br>
 <input id="signupUsername" placeholder="Username"><br>
 <input id="signupPassword" type="password" placeholder="Password"><br>
-
 <button onclick="signUp()">Sign Up</button>
 
 <hr>
 
-<h3>Login</h3>
-
 <input id="loginUsername" placeholder="Username"><br>
 <input id="loginPassword" type="password" placeholder="Password"><br>
-
 <button onclick="login()">Login</button>
 </div>
-  
-<div id="onlineSidebar">
-
-<b>Online Users</b>
-<div id="onlineList"></div>
-
-
-
-</div>
-</div>
-
 
 <div id="container" style="display:none">
 
 <div id="rooms">
-
 <b>Rooms</b>
-
 <div class="room" onclick="switchRoom('general')">General</div>
 <div class="room" onclick="switchRoom('tech')">Tech</div>
-<div class="room" onclick="switchRoom('gaming')">Gaming</div>
-
+<button onclick="leavePrivate()">Exit Private</button>
 </div>
 
-
 <div id="chatArea">
-
 <div id="chat"></div>
-
 <div id="typing"></div>
 
 <div id="controls">
-
 <input id="message" placeholder="Message">
-
 <button onclick="sendMessage()">Send</button>
 </div>
+</div>
 
+<div id="onlineSidebar">
+<b>Online</b>
+<div id="onlineList"></div>
+</div>
 
-
+</div>
 
 <script>
-  
-const SUPABASE_URL="https://ajcxjjbwoyugiwsslknw.supabase.co";
-const SUPABASE_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFqY3hqamJ3b3l1Z2l3c3Nsa253Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM0Mjc4NTYsImV4cCI6MjA4OTAwMzg1Nn0.jHYCwncqJf941ae-MNi1fEPgMcUiPW9iUPXRcdLsXU8";
 
-const client=supabase.createClient(SUPABASE_URL,SUPABASE_KEY)
+const client = supabase.createClient("YOUR_URL","YOUR_KEY")
 
 let username=""
 let room="general"
+let privateChatUser=null
+let unreadCounts={}
 let lastSend=0
-let capturedImage=null
-let isAdmin=false
 
-const chat=document.getElementById("chat")
-const typingBox=document.getElementById("typing")
-const onlineList=document.getElementById("onlineList")
+// encryption
+let key=localStorage.getItem("key")||CryptoJS.lib.WordArray.random(16).toString()
+localStorage.setItem("key",key)
 
-let key=localStorage.getItem("chatKey")
+function enc(t){return CryptoJS.AES.encrypt(t,key).toString()}
+function dec(t){try{return CryptoJS.AES.decrypt(t,key).toString(CryptoJS.enc.Utf8)}catch{return ""}}
 
-if(!key){
-key=CryptoJS.lib.WordArray.random(16).toString()
-localStorage.setItem("chatKey",key)
-}
-
-function encrypt(t){
-return CryptoJS.AES.encrypt(t,key).toString()
-}
-
-function decrypt(t){
-try{
-return CryptoJS.AES.decrypt(t,key).toString(CryptoJS.enc.Utf8)
-}catch{
-return "[encrypted]"
-}
-}
-
-
+// AUTH
 async function signUp(){
+let email=signupEmail.value
+let u=signupUsername.value
+let p=signupPassword.value
 
-const email=document.getElementById("signupEmail").value
-const uname=document.getElementById("signupUsername").value
-const pass=document.getElementById("signupPassword").value
-
-if(uname.length<3){alert("Username too short");return}
-
-const {data:exists}=await client.from("profiles").select("*").eq("username",uname).single()
-
-if(exists){alert("Username taken");return}
-
-const {error}=await client.auth.signUp({email,password:pass})
-
-if(error){alert(error.message);return}
-
-await client.from("profiles").insert({email:email,username:uname})
-
-alert("Account created")
-
+await client.auth.signUp({email,password:p})
+await client.from("profiles").insert({email:email,username:u})
+alert("Created")
 }
-
 
 async function login(){
+let u=loginUsername.value
+let p=loginPassword.value
 
-const uname=document.getElementById("loginUsername").value
-const pass=document.getElementById("loginPassword").value
+let {data:prof}=await client.from("profiles").select("*").eq("username",u).single()
+if(!prof){alert("No user");return}
 
-const {data:profile}=await client.from("profiles").select("*").eq("username",uname).single()
+await client.auth.signInWithPassword({email:prof.email,password:p})
+username=u
 
-if(!profile){alert("User not found");return}
-
-const {data,error}=await client.auth.signInWithPassword({
-email:profile.email,
-password:pass
-})
-
-if(error){alert(error.message);return}
-
-username=profile.username
-
-const {data:adminCheck}=await client.from("admins").select("*").eq("username",username).single()
-
-if(adminCheck) isAdmin=true
-
-document.getElementById("loginBox").style.display="none"
-document.getElementById("container").style.display="flex"
+loginBox.style.display="none"
+container.style.display="flex"
 
 loadMessages()
 updateOnline()
-
 }
 
-
+// SWITCH
 function switchRoom(r){
 room=r
+privateChatUser=null
 chat.innerHTML=""
 loadMessages()
 }
 
+// PRIVATE
+function setPrivate(u){
+privateChatUser=u
+chat.innerHTML=""
+loadMessages()
+}
 
+function leavePrivate(){
+privateChatUser=null
+chat.innerHTML=""
+loadMessages()
+}
+
+// RENDER
 function renderMessage(m){
 
-if(m.room!==room && m.private_to!==username && m.username!==username) return
-
-const div=document.createElement("div")
-div.className="msg"
-
-let text=decrypt(m.message)
-
-div.innerHTML="<b>"+m.username+"</b>: "+text+(m.edited?" (edited)":" ")
-
-const report=document.createElement("button")
-report.innerText="Report"
-report.onclick=()=>reportUser(m.username,text)
-div.appendChild(report)
-
-if(m.username===username || isAdmin){
-
-const del=document.createElement("button")
-del.innerText="Delete"
-del.onclick=()=>deleteMsg(m.id)
-div.appendChild(del)
-
+if(privateChatUser){
+if(!((m.username===username && m.private_to===privateChatUser)||(m.username===privateChatUser && m.private_to===username))) return
+}else{
+if(m.room!==room || m.private_to) return
 }
 
-if(isAdmin){
+let div=document.createElement("div")
+div.className="msg "+(m.username===username?"me":"other")
 
-const ban=document.createElement("button")
-ban.innerText="Ban"
-ban.onclick=()=>banUser(m.username)
-div.appendChild(ban)
+let text=dec(m.message)
 
+let ticks=""
+if(m.username===username){
+if(m.status==="sent") ticks="✓"
+if(m.status==="delivered") ticks="✓✓"
+if(m.status==="seen") ticks="✓✓"
 }
 
-if(m.image){
-
-const img=document.createElement("img")
-img.src=decrypt(m.image)
-div.appendChild(img)
-
-}
+div.innerHTML="<b>"+m.username+"</b><br>"+text+" <span class='tick'>"+ticks+"</span>"
 
 chat.appendChild(div)
 chat.scrollTop=chat.scrollHeight
 
+// mark seen
+if(m.username!==username){
+client.from("messages").update({status:"seen"}).eq("id",m.id)
 }
 
+}
 
+// LOAD
+async function loadMessages(){
+
+let query=client.from("messages").select("*").order("created_at",{ascending:true}).limit(50)
+
+if(privateChatUser){
+query=query.or(`and(username.eq.${username},private_to.eq.${privateChatUser}),and(username.eq.${privateChatUser},private_to.eq.${username})`)
+}else{
+query=query.eq("room",room).is("private_to",null)
+}
+
+let {data}=await query
+chat.innerHTML=""
+data.forEach(renderMessage)
+
+}
+
+// SEND
 async function sendMessage(){
 
-const text=document.getElementById("message").value
-const privateTo=document.getElementById("privateUser").value
+let text=message.value
+if(!text) return
 
-if(text.length>300){alert("Message too long");return}
-
-if(text.includes("http")){alert("Links not allowed");return}
-
-const now=Date.now()
-
-if(now-lastSend<2000){alert("Slow down");return}
-
-lastSend=now
+if(Date.now()-lastSend<1000)return
+lastSend=Date.now()
 
 await client.from("messages").insert({
 username:username,
-message:encrypt(text),
-image:capturedImage?encrypt(capturedImage):null,
+message:enc(text),
 room:room,
-private_to:privateTo||null
+private_to:privateChatUser,
+status:"sent"
 })
 
-capturedImage=null
-document.getElementById("message").value=""
-
-}
-// Send message when pressing Enter
-const messageInput = document.getElementById("message");
-
-messageInput.addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        event.preventDefault(); // Prevent default form submission / newline
-        sendMessage();          // Call your send function
-    }
-});
-
-async function deleteMsg(id){
-await client.from("messages").delete().eq("id",id)
+message.value=""
 }
 
-
-async function reportUser(user,msg){
-
-const reason=prompt("Reason")
-
-await client.from("abuse_reports").insert({
-reporter:username,
-reported_user:user,
-message:msg,
-reason:reason
+// ENTER
+message.addEventListener("keydown",e=>{
+if(e.key==="Enter"){e.preventDefault();sendMessage()}
 })
 
-alert("Reported")
+// ONLINE
+async function updateOnline(){
 
+await client.from("online_users").upsert(
+{username:username,last_seen:new Date().toISOString()},
+{onConflict:["username"]}
+)
+
+let {data}=await client.from("online_users").select("*")
+
+let active=data.filter(u=>new Date()-new Date(u.last_seen)<120000)
+
+onlineList.innerHTML=active.map(u=>
+`<div onclick="setPrivate('${u.username}')" style="cursor:pointer">${u.username}</div>`
+).join("")
 }
 
+setInterval(updateOnline,5000)
 
-async function banUser(u){
-await client.from("banned_users").insert({username:u})
-alert("User banned")
+// REALTIME
+client.channel("msg")
+.on("postgres_changes",{event:"INSERT",schema:"public",table:"messages"},p=>{
+renderMessage(p.new)
+
+// update delivery
+if(p.new.username!==username){
+client.from("messages").update({status:"delivered"}).eq("id",p.new.id)
 }
-
-
-async function loadMessages() {
-  const { data } = await client.from("messages")
-    .select("*")
-    .eq("room", room)
-    .order("created_at", { ascending: true })
-    .limit(50);
-
-  chat.innerHTML = "";
-  data.forEach(renderMessage);
-}
-  
-// ----------------- Online Users (FIXED) -----------------
-async function updateOnline() {
-    if (!username) return; // Only track logged-in users
-
-    const now = new Date().toISOString();
-
-    // Upsert current user with last_seen
-    await client.from("online_users").upsert(
-        { username: username, last_seen: now },
-        { onConflict: ["username"] } // Ensure it updates existing users
-    );
-
-    // Fetch all online users
-    const { data, error } = await client.from("online_users").select("*");
-    if (error || !data) return;
-
-    // Filter active users (last 2 minutes)
-    const activeUsers = data.filter(u => (new Date() - new Date(u.last_seen)) < 2 * 60 * 1000);
-
-    // Update sidebar
-    onlineList.innerHTML = activeUsers
-        .map(u => `<div style="cursor:pointer;" onclick="setPrivate('${u.username}')">${u.username}</div>`)
-        .join("");
-}
-
-// Call every 5 seconds
-setInterval(updateOnline, 5000);
-
-// Optional: immediately update after login
-updateOnline();
-
-
-function setPrivate(u){
-document.getElementById("privateUser").value=u
-}
-
-
-async function startCamera(){
-
-const stream=await navigator.mediaDevices.getUserMedia({video:true})
-document.getElementById("camera").srcObject=stream
-
-}
-
-
-function capturePhoto(){
-
-const video=document.getElementById("camera")
-const canvas=document.createElement("canvas")
-
-canvas.width=200
-canvas.height=150
-
-canvas.getContext("2d").drawImage(video,0,0)
-
-const data=canvas.toDataURL("image/jpeg",0.5)
-
-if(data.length>100000){
-alert("Image too large")
-return
-}
-
-capturedImage=data
-
-}
-client.channel("messages")
-  .on("postgres_changes", {
-    event: "INSERT",
-    schema: "public",
-    table: "messages"
-  }, payload => {
-    renderMessage(payload.new);  // Render new message immediately
-  })
-  .subscribe();
-
+})
+.subscribe()
 
 </script>
-
 </body>
 </html>
