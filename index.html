@@ -135,7 +135,13 @@ button{
   font-weight:bold;
   color:#6a0dad;
 }
+.privateLayout #chatArea{
+  background:#f3ecff; /* light purple */
+}
 
+.privateLayout #controls{
+  background:#e6dbff;
+}
 
 </style>
 
@@ -360,9 +366,12 @@ setInterval(updateOnline,5000);
 
 /* PRIVATE CHAT */
 function startPrivate(u){
-privateChatUser=u;
-chat.innerHTML="";
-loadMessages();
+  privateChatUser = u;
+
+  document.body.classList.add("privateLayout"); // 🔥 ADD THIS
+
+  chat.innerHTML = "";
+  loadMessages();
 }
 
 /* SWITCH ROOM */
