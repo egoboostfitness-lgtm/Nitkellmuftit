@@ -369,6 +369,7 @@ setInterval(updateOnline,5000);
 
 /* PRIVATE CHAT */
 function startPrivate(u){
+  if(u === username) return; //  BLOCK SELF CHAT
 privateChatUser=u;
 chat.innerHTML="";
 loadMessages();
