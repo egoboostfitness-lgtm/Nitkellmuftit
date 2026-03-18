@@ -356,8 +356,10 @@ const active=data.filter(u=>new Date()-new Date(u.last_seen)<30000);
 
 onlineList.innerHTML=active.map(u=>{
 let name=u.username;
-let badge=unread[name]?` <span class="unread">(${unread[name]})</span>`:"";
-return `<div class="user" onclick="startPrivate('${name}')">${name}${badge}</div>`;
+return `<div class="user ${unread[name] ? 'unread' : ''}" 
+onclick="startPrivate('${name}')">
+${name}
+</div>`;
 }).join("");
 }
 
