@@ -352,7 +352,9 @@ last_seen:new Date()
 
 const {data}=await client.from("online_users").select("*");
 
-const active=data.filter(u=>new Date()-new Date(u.last_seen)<30000);
+const active = data
+  .filter(u => new Date() - new Date(u.last_seen) < 30000)
+  .filter(u => u.username !== username); // 🔥 REMOVE YOURSELF
 
 onlineList.innerHTML=active.map(u=>{
 let name=u.username;
