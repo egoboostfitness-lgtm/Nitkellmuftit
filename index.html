@@ -362,6 +362,28 @@ private_to:privateChatUser
 message.value="";
 }
 
+client.auth.onAuthStateChange(async (event, session) => {
+
+  if(event === "PASSWORD_RECOVERY"){
+
+    let newPass = prompt("Enter your new password:");
+
+    if(!newPass) return;
+
+    const { error } = await client.auth.updateUser({
+      password: newPass
+    });
+
+    if(error){
+      alert(error.message);
+    } else {
+      alert("Password updated successfully!");
+    }
+
+  }
+
+});
+  
 /* ENTER KEY */
 message.addEventListener("keypress",e=>{
 if(e.key==="Enter") sendMessage();
