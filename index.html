@@ -439,9 +439,12 @@ async function updateOnline() {
       return `<div style="color:gray; font-weight:bold;">${u.username}</div>`;
     } else {
       // Other users, clickable for private chat
-      return `<div style="cursor:pointer; color:blue;" onclick="setPrivate('${u.username}')">${u.username}</div>`;
-    }
-  }).join("");
+let name=u.username;
+return `<div class="user ${unread[name] ? 'unread' : ''}" 
+onclick="startPrivate('${name}')">
+${name}
+</div>`;
+}).join("");
 }
 
 setInterval(updateOnline,5000);
