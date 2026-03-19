@@ -419,26 +419,29 @@ renderMessage(payload.new);
 }
 
 /* ONLINE USERS */
-async function updateOnline(){
+async function updateOnline() {
+  // Upsert current user
+  await client.from("online_users").upsert({
+    username: username,
+    last_seen: new Date()
+  });
 
-await client.from("online_users").upsert({
-username,
-last_seen:new Date()
-});
+  // Get all online users
+  const { data } = await client.from("online_users").select("*");
 
-const {data}=await client.from("online_users").select("*");
+  // Filter active users (last 30 seconds)
+  const active = data.filter(u => (new Date() - new Date(u.last_seen)) < 30000);
 
-const active = data
-  .filter(u => new Date() - new Date(u.last_seen) < 30000)
-  .filter(u => u.username !== username); // 🔥 REMOVE YOURSELF
-
-onlineList.innerHTML=active.map(u=>{
-let name=u.username;
-return `<div class="user ${unread[name] ? 'unread' : ''}" 
-onclick="startPrivate('${name}')">
-${name}
-</div>`;
-}).join("");
+  // Render list
+  onlineList.innerHTML = active.map(u => {
+    if (u.username === username) {
+      // Show yourself, not clickable
+      return `<div style="color:gray; font-weight:bold;">${u.username}</div>`;
+    } else {
+      // Other users, clickable for private chat
+      return `<div style="cursor:pointer; color:blue;" onclick="setPrivate('${u.username}')">${u.username}</div>`;
+    }
+  }).join("");
 }
 
 setInterval(updateOnline,5000);
