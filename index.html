@@ -370,6 +370,8 @@ private_to:privateChatUser
 message.value="";
 }
 
+/* PASSWORD RECOVERY FEATURE */
+  
 client.auth.onAuthStateChange(async (event, session) => {
 
   if(event === "PASSWORD_RECOVERY"){
@@ -456,6 +458,7 @@ loadMessages();
 unread[r] = 0; 
 }
 
+/* FORGOT PASSWORD POPUP */
 async function forgotPassword(){
 
   let email = prompt("Enter your email:");
