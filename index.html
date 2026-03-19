@@ -425,6 +425,27 @@ chat.innerHTML="";
 loadMessages();
 unread[r] = 0; 
 }
+
+async function forgotPassword(){
+
+  let email = prompt("Enter your email:");
+
+  if(!email){
+    alert("Email required");
+    return;
+  }
+
+  const { error } = await client.auth.resetPasswordForEmail(email, {
+    redirectTo: "https://www.nitkelmuftit.icu"
+  });
+
+  if(error){
+    alert(error.message);
+  } else {
+    alert("Reset email sent. Check your inbox.");
+  }
+}
+  
 </script>
 
 </body>
