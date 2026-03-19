@@ -349,14 +349,6 @@ async function loadMessages() {
   const { data } = await query;
   chat.innerHTML = "";
   if(data) data.forEach(renderMessage);
-document.getElementById("chatHeader").innerText =
-privateChatUser ? privateChatUser : "# "+room;
-
-// Reset unread
-if(privateChatUser) unread[privateChatUser]=0;
-else unread[room]=0;
-updateSidebar();
-}
 }
 
 /* SEND */
