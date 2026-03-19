@@ -333,22 +333,22 @@ chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
 }
 
-/* LOAD */
-async function loadMessages(){
+  /* LOAD */
 
-let query=client.from("messages").select("*").order("created_at",{ascending:true});
+async function loadMessages() {
+  let query = client.from("messages").select("*").order("created_at", { ascending: true }).limit(50);
 
-if(privateChatUser){
-query=query.or(`and(username.eq.${username},private_to.eq.${privateChatUser}),and(username.eq.${privateChatUser},private_to.eq.${username})`);
-}else{
-query=query.eq("room",room).is("private_to",null);
-}
+  if(privateChatUser){
+    // Load only messages between current user and privateChatUser
+    query = query.or(`and(username.eq.${username},private_to.eq.${privateChatUser}),and(username.eq.${privateChatUser},private_to.eq.${username})`);
+  } else {
+    // Load only messages for the current room
+    query = query.eq("room", room);
+  }
 
-const {data}=await query;
-
-chat.innerHTML="";
-data.forEach(renderMessage);
-
+  const { data } = await query;
+  chat.innerHTML = "";
+  if(data) data.forEach(renderMessage);
 document.getElementById("chatHeader").innerText =
 privateChatUser ? privateChatUser : "# "+room;
 
@@ -467,6 +467,7 @@ loadMessages();
 unread[r] = 0; 
 }
 
+  
 /* GET DATE & TIME */
 function formatDateTime(ts){
   const date = new Date(ts);
