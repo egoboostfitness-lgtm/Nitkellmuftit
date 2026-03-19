@@ -333,22 +333,29 @@ chat.appendChild(div);
 chat.scrollTop=chat.scrollHeight;
 }
 
-  /* LOAD */
+/* LOAD */
+async function loadMessages(){
 
-async function loadMessages() {
-  let query = client.from("messages").select("*").order("created_at", { ascending: true }).limit(50);
+let query=client.from("messages").select("*").order("created_at",{ascending:true});
 
-  if(privateChatUser){
-    // Load only messages between current user and privateChatUser
-    query = query.or(`and(username.eq.${username},private_to.eq.${privateChatUser}),and(username.eq.${privateChatUser},private_to.eq.${username})`);
-  } else {
-    // Load only messages for the current room
-    query = query.eq("room", room);
-  }
+if(privateChatUser){
+query=query.or(`and(username.eq.${username},private_to.eq.${privateChatUser}),and(username.eq.${privateChatUser},private_to.eq.${username})`);
+}else{
+query=query.eq("room",room).is("private_to",null);
+}
 
-  const { data } = await query;
-  chat.innerHTML = "";
-  if(data) data.forEach(renderMessage);
+const {data}=await query;
+
+chat.innerHTML="";
+data.forEach(renderMessage);
+
+document.getElementById("chatHeader").innerText =
+privateChatUser ? privateChatUser : "# "+room;
+
+// Reset unread
+if(privateChatUser) unread[privateChatUser]=0;
+else unread[room]=0;
+updateSidebar();
 }
 
 /* SEND */
@@ -412,26 +419,20 @@ renderMessage(payload.new);
 }
 
 /* ONLINE USERS */
-async function updateOnline() {
-  // Upsert current user
-  await client.from("online_users").upsert({
-    username: username,
-    last_seen: new Date()
-  });
+async function updateOnline(){
 
-  // Get all online users
-  const { data } = await client.from("online_users").select("*");
+await client.from("online_users").upsert({
+username,
+last_seen:new Date()
+});
 
-  // Filter active users (last 30 seconds)
-  const active = data.filter(u => (new Date() - new Date(u.last_seen)) < 30000);
+const {data}=await client.from("online_users").select("*");
 
-  // Render list
-  onlineList.innerHTML = active.map(u => {
-    if (u.username === username) {
-      // Show yourself, not clickable
-      return `<div style="color:gray; font-weight:bold;">${u.username}</div>`;
-    } else {
-      // Other users, clickable for private chat
+const active = data
+  .filter(u => new Date() - new Date(u.last_seen) < 30000)
+  .filter(u => u.username !== username); //  REMOVE YOURSELF
+
+onlineList.innerHTML=active.map(u=>{
 let name=u.username;
 return `<div class="user ${unread[name] ? 'unread' : ''}" 
 onclick="startPrivate('${name}')">
@@ -460,7 +461,6 @@ loadMessages();
 unread[r] = 0; 
 }
 
-  
 /* GET DATE & TIME */
 function formatDateTime(ts){
   const date = new Date(ts);
