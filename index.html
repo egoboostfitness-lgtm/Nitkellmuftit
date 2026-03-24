@@ -83,6 +83,9 @@ header{
   flex-direction:column;
   height:100%;
   margin-top:50px; /* below header */
+  overflow-y:auto;
+  padding:10px;
+  padding-bottom:130px; /* already there, may need adjustment */
 }
 
 /* CHAT MESSAGES */
@@ -92,6 +95,7 @@ header{
   padding:10px;
   display:flex;
   flex-direction:column;
+  padding-bottom:80px; /* ensures last message isn’t hidden */
 }
 
 .msg {
@@ -112,6 +116,7 @@ header{
   background:#ddd;
   position:sticky;
   bottom:0;
+  z-index:10; /* make sure it’s above chat */
 }
 
 #message {
