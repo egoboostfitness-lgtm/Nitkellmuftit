@@ -140,7 +140,14 @@ button1 {
 #loginBox {
   padding:50px;                 /* Space inside login page */
   text-align:center;            /* Center all elements */
+  display:flex;
+  flex-direction:column;
+  justify-content:center;  /* vertical center */
+  align-items:center;      /* horizontal center */
+  height:100vh;            /* full viewport height */
+  background:#f2f2f5;
 }
+
 
 /* =================== TYPOGRAPHY =================== */
 #chatHeader {
@@ -261,11 +268,16 @@ async function login(){
   const {error}=await client.auth.signInWithPassword({email:profile.email,password:pass});
   if(error){ alert(error.message); return; }
   username=uname;
-  loginBox.style.display="none";
-  container.style.display="flex";
-  loadMessages();
-  updateOnline();
-  subscribeMessages();
+     // Hide login box
+    document.getElementById("loginBox").style.display = "none";
+
+    // Show chat container
+    document.getElementById("container").style.display = "flex";
+
+    loadMessages();
+    updateOnline();
+    subscribeMessages();
+}
 }
 
 /* =================== MESSAGE RENDER =================== */
