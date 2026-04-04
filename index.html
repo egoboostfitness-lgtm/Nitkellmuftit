@@ -156,7 +156,22 @@ button1 {
   background:#f2f2f5;
 }
 
+#rulesBox {
+  margin-top:30px;
+  padding-top:15px;
+  border-top:2px solid #ccc; /* divider line */
+}
 
+.rulesContent {
+  max-height:150px;          /* scrollable box */
+  overflow-y:auto;
+  background:#fff;
+  padding:15px;
+  border-radius:10px;
+  border:1px solid #ddd;
+  text-align:left;
+  font-size:13px;
+}
 /* =================== TYPOGRAPHY =================== */
 #chatHeader {
   margin-top:0px;               /* Remove extra margin */
@@ -199,8 +214,11 @@ Forgot Password?
 
 <hr>
 
-<div id="rulesBox">
+ <div class="rulesContent">
 <h3>Chat Rules & Disclaimer</h3>
+   
+<div id="rulesBox">
+
 <p><b>1. Respect:</b> No harassment, hate speech, threats or abusive behavior.</p>
 <p><b>2. No Illegal Content:</b> Do not share harmful, explicit or malicious content.</p>
 <p><b>3. No Spam:</b> No spamming, flooding, or unauthorized advertising.</p>
@@ -210,9 +228,9 @@ Forgot Password?
 <p><b>7. Use at Your Own Risk:</b> You are responsible for your actions.</p>
 <p><b>8. Data & Security:</b> Encryption may be used but avoid sharing sensitive info.</p>
 <p><b>9. Agreement:</b> Using this chat means you agree to these rules.</p>
-<p><b>10. Msg Store:</b> General: last 200 msgs. Private: last 50 msgs.</p>  
+<p><b>10. Stored Messages:</b> General: last 200. Private: last 50.</p>  
 </div>
-
+</div>
 </div>
 
 <!-- =================== CHAT PAGE =================== -->
