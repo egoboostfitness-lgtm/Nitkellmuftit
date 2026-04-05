@@ -49,7 +49,7 @@ header {
   flex:1;                      /* Fill remaining space below header */
   display:flex;                /* Layout children horizontally: sidebar + chat */
   margin-top:40px;             /* Leave space for header (slightly taller than header height) */
-  height:calc(100vh - 40px);   /* Ensure container fits viewport minus header */
+  height:calc(100vh - 60px);   /* Ensure container fits viewport minus header */
 }
 
 /* =================== ONLINE USERS SIDEBAR =================== */
@@ -75,7 +75,9 @@ header {
   flex:1;                      /* Fill remaining horizontal space */
   display:flex;                /* Flex layout to stack chat + input bar */
   flex-direction:column;       /* Vertical stacking: messages on top, input at bottom */
-  height:90vh;                  /* 100% of viewpoint*/
+  height:100%;                  /* 100% of viewpoint*/
+  overflow:hidden;
+
 }
   
 /* =================== CHAT SCROLL AREA =================== */
