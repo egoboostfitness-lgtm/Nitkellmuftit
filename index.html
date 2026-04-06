@@ -14,11 +14,10 @@ body {
   margin:0;                  /* Remove default page margin */
   font-family: Arial;         /* Set default font */
   background:#f2f2f5;         /* Light gray background */
-  height:90vh;               /* Full viewport height */
   display:flex;               /* Use flexbox for vertical layout */
   flex-direction:column;      /* Stack header, login/chat vertically */
+  height:100vh;               /* Full viewport height */
   overflow:hidden;            /* Prevent page scrolling; chat handles its own scroll */
-  padding-top:40px;
   text-align:center;            /* Center all elements */
 }
 
@@ -74,7 +73,7 @@ header {
   flex:1;                      /* Fill remaining horizontal space */
   display:flex;                /* Flex layout to stack chat + input bar */
   flex-direction:column;       /* Vertical stacking: messages on top, input at bottom */
-  height:90vh;                  /* 100% of viewpoint*/
+  overflow:hidden;              
 }
   
 /* =================== CHAT SCROLL AREA =================== */
@@ -83,8 +82,7 @@ header {
   overflow-y:auto;             /* Scroll when messages exceed visible area */
   padding:10px;                /* Space inside chat */
   padding-bottom:90px;         /* Bottom padding to prevent last message from being hidden by input bar */
-  display:flex;                /* Flex layout for messages */
-  flex-direction:column;       /* Stack messages vertically */
+
 }
 
 /* =================== MESSAGE BUBBLES =================== */
@@ -208,11 +206,37 @@ button1 {
   font-weight:bold;             /* Make unread user bold */
   color:#6a0dad;                /* Purple color */
 }
+
+@media (max-width:768px){
+
+  #onlineSidebar {
+    position:fixed;
+    top:40px;
+    left:-100%;
+    height:calc(100vh - 40px);
+    width:200px;
+    z-index:1000;
+    transition:0.3s;
+  }
+
+  #onlineSidebar.active {
+    left:0;
+  }
+
+  #container {
+    margin-top:40px;
+  }
+
+}
+  
 </style>
 </head>
 <body>
 
-<header id="chatHeader">Nitkelmu Ftit Chat</header>
+<header id="chatHeader">
+  <button onclick="toggleSidebar()" style="float:left;background:none;border:none;color:white;font-size:18px;">☰</button>
+  Nitkelmu Ftit Chat
+</header>
 
 <h1>Nitkelmu Ftit</h1> 
 <h3>Have a chat... find a friend!</h3>
@@ -307,6 +331,10 @@ let unread={};
 const chat=document.getElementById("chat");
 const onlineList=document.getElementById("onlineList");
 const message = document.getElementById("message");
+
+  function toggleSidebar(){
+  document.getElementById("onlineSidebar").classList.toggle("active");
+}
 
 /* =================== login and signup tabs  =================== */
  function showLogin(){
