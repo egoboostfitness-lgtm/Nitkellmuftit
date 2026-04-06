@@ -44,10 +44,10 @@ header {
 
 /* =================== MAIN CONTAINER =================== */
 #container {
-  flex:1;                      /* Fill remaining space below header */
   display:flex;                /* Layout children horizontally: sidebar + chat */
   margin-top:40px;             /* Leave space for header (slightly taller than header height) */
   height:calc(100vh - 40px);   /* Ensure container fits viewport minus header */
+  overflow:hidden;
 }
 
 /* =================== ONLINE USERS SIDEBAR =================== */
@@ -73,6 +73,7 @@ header {
   flex:1;                      /* Fill remaining horizontal space */
   display:flex;                /* Flex layout to stack chat + input bar */
   flex-direction:column;       /* Vertical stacking: messages on top, input at bottom */
+  height:90%;
   overflow:hidden;              
 }
   
@@ -81,7 +82,7 @@ header {
   flex:1;                      /* Take up all remaining space in chatArea above input */
   overflow-y:auto;             /* Scroll when messages exceed visible area */
   padding:10px;                /* Space inside chat */
-  padding-bottom:90px;         /* Bottom padding to prevent last message from being hidden by input bar */
+  padding-bottom:80px;         /* Bottom padding to prevent last message from being hidden by input bar */
 
 }
 
@@ -111,7 +112,7 @@ header {
   background:#ddd;             /* Light gray background */
   position:sticky;             /* Stick to bottom of chatArea */
   bottom:0;                    /* Stick exactly at bottom */
-  z-index:10;                  /* Make sure input bar is above messages */
+  z-index:20;                  /* Make sure input bar is above messages */
 }
 
 #message {
